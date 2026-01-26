@@ -1,9 +1,14 @@
 import os
+import threading
 from flask import Flask, jsonify, render_template
 from downloader import load_state
 from datetime import datetime
+from worker import start_worker   # 👈 importa o worker
 
 app = Flask(__name__)
+
+# 🔁 INICIA O WORKER AQUI (quando o app sobe)
+threading.Thread(target=start_worker, daemon=True).start()
 
 @app.route("/")
 def index():
