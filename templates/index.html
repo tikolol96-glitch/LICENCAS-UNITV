@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Config Downloader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #e5e7eb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .card {
+            background: #020617;
+            padding: 25px;
+            border-radius: 10px;
+            width: 360px;
+            box-shadow: 0 0 20px rgba(0,0,0,.5);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .info {
+            margin: 10px 0;
+            font-size: 15px;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            background: #020617;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #93c5fd;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Config Downloader</h1>
+
+    <div class="info">📂 Arquivos baixados: <span id="files">0</span></div>
+    <div class="info">⏱️ Tempo para liberar: <span id="timer">--:--</span></div>
+
+    <div class="status">
+        📄 Status: <span id="msg">---</span>
+    </div>
+</div>
+
+<script>
+let interval = null;
+let lastRemaining = null;
+
+async function loadStatus() {
+    const res = await fetch("/status");
+    const data = await res.json();
+
+    document.getElementById("files").innerText = data.files;
+    document.getElementById("msg").innerText = data.mensagem;
+
+    if (data.tempo_para_liberar) {
+        startTimer(data.tempo_para_liberar);
+    } else {
+        document.getElementById("timer").innerText = "--:--";
+    }
+}
+function startTimer(seconds) {
+    clearInterval(interval);
+
+    interval = setInterval(() => {
+        if (seconds <= 0) {
+            clearInterval(interval);
+            loadStatus();
+            return;
+        }
+
+        const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+        const s = String(seconds % 60).padStart(2, "0");
+
+        document.getElementById("timer").innerText = `${m}:${s}`;
+        seconds--;
+    }, 1000);
+}
+
+// Primeira carga
+loadStatus();
+
+// Atualiza status a cada 10s (seguro e leve)
+setInterval(loadStatus, 10000);
+</script>
+
+</body>
+</html>
