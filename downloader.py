@@ -1,5 +1,4 @@
 import requests
-import time
 import os
 import json
 import re
@@ -11,42 +10,52 @@ STATE_FILE = "state.json"
 
 os.makedirs(CONFIG_DIR, exist_ok=True)
 
+
 def default_state():
-    state = {
+    return {
         "blocked_until": None,
         "last_message": "Inicializado"
     }
-    save_state(state)
-    return state
+
+
 def load_state():
     if not os.path.exists(STATE_FILE):
         return default_state()
+
     try:
         with open(STATE_FILE, "r") as f:
             return json.load(f)
     except:
         return default_state()
 
+
 def save_state(state):
     with open(STATE_FILE, "w") as f:
         json.dump(state, f, indent=2)
 
+
 def is_blocked(state):
-    if not state["blocked_until"]:
+    try:
+        if not state.get("blocked_until"):
+            return False
+        return datetime.now() < datetime.fromisoformat(state["blocked_until"])
+    except:
+        state["blocked_until"] = None
+        save_state(state)
         return False
-    return datetime.now() < datetime.fromisoformat(state["blocked_until"])
+
 
 def auto_download_once():
     state = load_state()
 
-    # Se ainda está bloqueado, não faz nada
+    # ⛔ ainda bloqueado
     if is_blocked(state):
         return
 
     try:
         r = requests.post(API_URL, timeout=20)
 
-        # API informou bloqueio
+        # 🚫 limite atingido
         if r.status_code == 429 or "Limite atingido" in r.text:
             msg = r.json().get("error", "Limite atingido")
             minutes = 60
