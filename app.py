@@ -4,6 +4,7 @@ from flask import Flask, jsonify, render_template
 from downloader import load_state
 from datetime import datetime
 from worker import start_worker   # 👈 importa o worker
+from supabase_client import supabase
 
 app = Flask(__name__)
 
@@ -17,7 +18,9 @@ def index():
 @app.route("/status")
 def status():
     state = load_state()
-    files = len(os.listdir("configs"))
+    files = len(
+    supabase.storage.from_("configs").list()
+)
 
     tempo_para_liberar = None
     mensagem = "Livre"
