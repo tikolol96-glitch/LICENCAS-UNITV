@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 
 app = Flask(__name__)
 
-# 🔁 INICIA O WORKER QUANDO O APP SOBE
+# 🔁 INICIA O WORKER EM BACKGROUND
 threading.Thread(target=start_worker, daemon=True).start()
 
 UPDATE_URL = (
@@ -32,8 +32,6 @@ def index():
 @app.route("/status")
 def status():
     state = load_state()
-
-    # ✅ correção de indentação
     files = len(supabase.storage.from_("configs").list())
 
     tempo_para_liberar = None
@@ -60,9 +58,8 @@ def status():
     })
 
 
-@app.route("/update")
-def update():
-    # 🔹 Consulta servidor oficial (XML)
+@app.route("/update/apk")
+def update_apk():
     r = requests.get(UPDATE_URL, timeout=10)
     root = ET.fromstring(r.text)
 
@@ -70,9 +67,13 @@ def update():
     apk_url = app_node.findtext("url")
 
     if not apk_url:
-        return jsonify({"error": "URL do APK não encontrada"}), 500
+        return jsonify({"error": "APK não encontrado"}), 500
 
-    # 🔹 Busca config no Supabase
+    return jsonify({"url": apk_url})
+
+
+@app.route("/update/config")
+def update_config():
     files = supabase.storage.from_("configs").list()
 
     if not files:
@@ -81,10 +82,7 @@ def update():
     config_name = files[0]["name"]
     config_url = supabase.storage.from_("configs").get_public_url(config_name)
 
-    return jsonify({
-        "apk": apk_url,
-        "config": config_url
-    })
+    return jsonify({"url": config_url})
 
 
 # ---------------- START ---------------- #

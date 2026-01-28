@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <title>Config Downloader</title>
@@ -20,7 +19,7 @@
             padding: 25px;
             border-radius: 10px;
             width: 360px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, .5);
+            box-shadow: 0 0 20px rgba(0,0,0,.5);
         }
 
         h1 {
@@ -41,77 +40,80 @@
             font-size: 14px;
             color: #93c5fd;
         }
+
+        .btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 12px;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .btn.config {
+            background: #16a34a;
+        }
     </style>
 </head>
-
 <body>
 
-    <div class="card">
-        <h1>Config Downloader</h1>
+<div class="card">
+    <h1>Config Downloader</h1>
 
-        <div class="info">📂 Arquivos baixados: <span id="files">0</span></div>
-        <div class="info">⏱️ Tempo para liberar: <span id="timer">--:--</span></div>
+    <div class="info">📂 Arquivos no bucket: <span id="files">0</span></div>
+    <div class="info">⏱️ Tempo para liberar: <span id="timer">--:--</span></div>
 
-        <div class="status">
-            📄 Status: <span id="msg">---</span>
-        </div>
-        <button onclick="atualizar()" style="
-    width: 100%;
-    margin-top: 20px;
-    padding: 12px;
-    background: #2563eb;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    cursor: pointer;
-">
-            ⬇️ Baixar APK + Config
-        </button>
+    <div class="status">
+        📄 Status: <span id="msg">---</span>
     </div>
 
-    <script>
-        let interval = null;
-        let lastRemaining = null;
+    <button onclick="baixarApk()" class="btn">
+        ⬇️ Baixar APK
+    </button>
 
-        async function loadStatus() {
-            const res = await fetch("/status");
-            const data = await res.json();
+    <button onclick="baixarConfig()" class="btn config">
+        ⬇️ Baixar .config
+    </button>
+</div>
 
-            document.getElementById("files").innerText = data.files;
-            document.getElementById("msg").innerText = data.mensagem;
+<script>
+let interval = null;
 
-            if (data.tempo_para_liberar) {
-                startTimer(data.tempo_para_liberar);
-            } else {
-                document.getElementById("timer").innerText = "--:--";
-            }
-        }
-        function startTimer(seconds) {
+async function loadStatus() {
+    const res = await fetch("/status");
+    const data = await res.json();
+
+    document.getElementById("files").innerText = data.files;
+    document.getElementById("msg").innerText = data.mensagem;
+
+    if (data.tempo_para_liberar) {
+        startTimer(data.tempo_para_liberar);
+    } else {
+        document.getElementById("timer").innerText = "--:--";
+    }
+}
+
+function startTimer(seconds) {
+    clearInterval(interval);
+
+    interval = setInterval(() => {
+        if (seconds <= 0) {
             clearInterval(interval);
-
-            interval = setInterval(() => {
-                if (seconds <= 0) {
-                    clearInterval(interval);
-                    loadStatus();
-                    return;
-                }
-
-                const m = String(Math.floor(seconds / 60)).padStart(2, "0");
-                const s = String(seconds % 60).padStart(2, "0");
-
-                document.getElementById("timer").innerText = `${m}:${s}`;
-                seconds--;
-            }, 1000);
+            loadStatus();
+            return;
         }
 
-        // Primeira carga
-        loadStatus();
+        const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+        const s = String(seconds % 60).padStart(2, "0");
 
-        // Atualiza status a cada 10s (seguro e leve)
-        setInterval(loadStatus, 10000);
-    </script>
-    <script>
+        document.getElementById("timer").innerText = `${m}:${s}`;
+        seconds--;
+    }, 1000);
+}
+
 function download(url) {
     const a = document.createElement("a");
     a.href = url;
@@ -121,31 +123,34 @@ function download(url) {
     document.body.removeChild(a);
 }
 
-async function atualizar() {
-    try {
-        const res = await fetch("/update");
-        const data = await res.json();
+async function baixarApk() {
+    const res = await fetch("/update/apk");
+    const data = await res.json();
 
-        if (data.error) {
-            alert(data.error);
-            return;
-        }
-
-        // 1️⃣ Baixa APK
-        download(data.apk);
-
-        // 2️⃣ Baixa config após 1s
-        setTimeout(() => {
-            download(data.config);
-        }, 1000);
-
-    } catch (e) {
-        alert("Erro ao buscar atualização");
+    if (data.error) {
+        alert(data.error);
+        return;
     }
+
+    download(data.url);
 }
+
+async function baixarConfig() {
+    const res = await fetch("/update/config");
+    const data = await res.json();
+
+    if (data.error) {
+        alert(data.error);
+        return;
+    }
+
+    download(data.url);
+}
+
+// Inicialização
+loadStatus();
+setInterval(loadStatus, 10000);
 </script>
 
-
 </body>
-
 </html>
