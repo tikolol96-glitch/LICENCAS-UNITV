@@ -69,8 +69,16 @@ def update_apk():
     if not apk_url:
         return jsonify({"error": "APK não encontrado"}), 500
 
-    return Response(apk_url, mimetype="text/plain")
+    # 🔹 baixa o APK real
+    apk_response = requests.get(apk_url, stream=True)
 
+    return Response(
+        apk_response.iter_content(chunk_size=8192),
+        mimetype="application/vnd.android.package-archive",
+        headers={
+            "Content-Disposition": 'attachment; filename="unitv.apk"'
+        }
+    )
 
 @app.route("/update/config")
 def update_config():
@@ -80,9 +88,17 @@ def update_config():
         return jsonify({"error": "Nenhum .config disponível"}), 404
 
     config_name = files[0]["name"]
-    config_url = supabase.storage.from_("configs").get_public_url(config_name)
 
-    return jsonify({"url": config_url})
+    # 🔹 baixa o arquivo do Supabase
+    res = supabase.storage.from_("configs").download(config_name)
+
+    return Response(
+        res,
+        mimetype="application/octet-stream",
+        headers={
+            "Content-Disposition": f'attachment; filename="{config_name}"'
+        }
+    )
 
 
 # ---------------- START ---------------- #
