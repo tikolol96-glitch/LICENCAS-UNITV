@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <title>Config Downloader</title>
@@ -19,7 +20,7 @@
             padding: 25px;
             border-radius: 10px;
             width: 360px;
-            box-shadow: 0 0 20px rgba(0,0,0,.5);
+            box-shadow: 0 0 20px rgba(0, 0, 0, .5);
         }
 
         h1 {
@@ -42,60 +43,109 @@
         }
     </style>
 </head>
+
 <body>
 
-<div class="card">
-    <h1>Config Downloader</h1>
+    <div class="card">
+        <h1>Config Downloader</h1>
 
-    <div class="info">📂 Arquivos baixados: <span id="files">0</span></div>
-    <div class="info">⏱️ Tempo para liberar: <span id="timer">--:--</span></div>
+        <div class="info">📂 Arquivos baixados: <span id="files">0</span></div>
+        <div class="info">⏱️ Tempo para liberar: <span id="timer">--:--</span></div>
 
-    <div class="status">
-        📄 Status: <span id="msg">---</span>
+        <div class="status">
+            📄 Status: <span id="msg">---</span>
+        </div>
+        <button onclick="atualizar()" style="
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+">
+            ⬇️ Baixar APK + Config
+        </button>
     </div>
-</div>
 
-<script>
-let interval = null;
-let lastRemaining = null;
+    <script>
+        let interval = null;
+        let lastRemaining = null;
 
-async function loadStatus() {
-    const res = await fetch("/status");
-    const data = await res.json();
+        async function loadStatus() {
+            const res = await fetch("/status");
+            const data = await res.json();
 
-    document.getElementById("files").innerText = data.files;
-    document.getElementById("msg").innerText = data.mensagem;
+            document.getElementById("files").innerText = data.files;
+            document.getElementById("msg").innerText = data.mensagem;
 
-    if (data.tempo_para_liberar) {
-        startTimer(data.tempo_para_liberar);
-    } else {
-        document.getElementById("timer").innerText = "--:--";
-    }
-}
-function startTimer(seconds) {
-    clearInterval(interval);
-
-    interval = setInterval(() => {
-        if (seconds <= 0) {
+            if (data.tempo_para_liberar) {
+                startTimer(data.tempo_para_liberar);
+            } else {
+                document.getElementById("timer").innerText = "--:--";
+            }
+        }
+        function startTimer(seconds) {
             clearInterval(interval);
-            loadStatus();
+
+            interval = setInterval(() => {
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    loadStatus();
+                    return;
+                }
+
+                const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+                const s = String(seconds % 60).padStart(2, "0");
+
+                document.getElementById("timer").innerText = `${m}:${s}`;
+                seconds--;
+            }, 1000);
+        }
+
+        // Primeira carga
+        loadStatus();
+
+        // Atualiza status a cada 10s (seguro e leve)
+        setInterval(loadStatus, 10000);
+    </script>
+    <script>
+function download(url) {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+async function atualizar() {
+    try {
+        const res = await fetch("/update");
+        const data = await res.json();
+
+        if (data.error) {
+            alert(data.error);
             return;
         }
 
-        const m = String(Math.floor(seconds / 60)).padStart(2, "0");
-        const s = String(seconds % 60).padStart(2, "0");
+        // 1️⃣ Baixa APK
+        download(data.apk);
 
-        document.getElementById("timer").innerText = `${m}:${s}`;
-        seconds--;
-    }, 1000);
+        // 2️⃣ Baixa config após 1s
+        setTimeout(() => {
+            download(data.config);
+        }, 1000);
+
+    } catch (e) {
+        alert("Erro ao buscar atualização");
+    }
 }
-
-// Primeira carga
-loadStatus();
-
-// Atualiza status a cada 10s (seguro e leve)
-setInterval(loadStatus, 10000);
 </script>
 
+
 </body>
+
 </html>

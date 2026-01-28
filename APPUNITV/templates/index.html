@@ -1,9 +1,0 @@
-<button onclick="baixar()">Atualizar</button>
-
-<script>
-function baixar() {
-    fetch("/update")
-        .then(r => r.text())
-        .then(url => window.location.href = url);
-}
-</script>
