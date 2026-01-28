@@ -1,6 +1,6 @@
 import os
 import threading
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, Response
 from downloader import load_state
 from datetime import datetime
 from worker import start_worker
@@ -69,7 +69,7 @@ def update_apk():
     if not apk_url:
         return jsonify({"error": "APK não encontrado"}), 500
 
-    return jsonify({"url": apk_url})
+    return Response(apk_url, mimetype="text/plain")
 
 
 @app.route("/update/config")
