@@ -124,27 +124,15 @@ function download(url) {
 }
 
 async function baixarApk() {
-    const res = await fetch("/update/apk");
-    const data = await res.json();
-
-    if (data.error) {
-        alert(data.error);
-        return;
-    }
-
-    download(data.url);
+     // Navega direto para a rota
+    // O Flask já força o download
+    window.location.href = "/update/apk";
 }
 
 async function baixarConfig() {
-    const res = await fetch("/update/config");
-    const data = await res.json();
-
-    if (data.error) {
-        alert(data.error);
-        return;
-    }
-
-    download(data.url);
+     // Navega direto para a rota
+    // O Flask já força o download
+    window.location.href = "/update/config";
 }
 
 // Inicialização
