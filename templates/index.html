@@ -1,146 +1,143 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Config Downloader</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #0f172a;
-            color: #e5e7eb;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        background: #0f172a;
+        color: #e5e7eb;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
 
-        .card {
-            background: #020617;
-            padding: 25px;
-            border-radius: 10px;
-            width: 360px;
-            box-shadow: 0 0 20px rgba(0,0,0,.5);
-        }
+      .card {
+        background: #020617;
+        padding: 25px;
+        border-radius: 10px;
+        width: 360px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+      h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
 
-        .info {
-            margin: 10px 0;
-            font-size: 15px;
-        }
+      .info {
+        margin: 10px 0;
+        font-size: 15px;
+      }
 
-        .status {
-            margin-top: 15px;
-            padding: 10px;
-            background: #020617;
-            border-radius: 6px;
-            font-size: 14px;
-            color: #93c5fd;
-        }
+      .status {
+        margin-top: 15px;
+        padding: 10px;
+        background: #020617;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #93c5fd;
+      }
 
-        .btn {
-            width: 100%;
-            margin-top: 12px;
-            padding: 12px;
-            background: #2563eb;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-        }
+      .btn {
+        width: 100%;
+        margin-top: 12px;
+        padding: 12px;
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+      }
 
-        .btn.config {
-            background: #16a34a;
-        }
+      .btn.config {
+        background: #16a34a;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Config Downloader</h1>
 
-<div class="card">
-    <h1>Config Downloader</h1>
+      <div class="info">📂 Arquivos no bucket: <span id="files">0</span></div>
+      <div class="info">
+        ⏱️ Tempo para liberar: <span id="timer">--:--</span>
+      </div>
 
-    <div class="info">📂 Arquivos no bucket: <span id="files">0</span></div>
-    <div class="info">⏱️ Tempo para liberar: <span id="timer">--:--</span></div>
+      <div class="status">📄 Status: <span id="msg">---</span></div>
 
-    <div class="status">
-        📄 Status: <span id="msg">---</span>
+      <button onclick="baixarApkOld()" class="btn">⬇️ APK OLD</button>
+
+      <button onclick="baixarApkNew()" class="btn">⬇️ APK NEW</button>
+
+      <button onclick="baixarGerador()" class="btn config">⚙️ GERADOR</button>
     </div>
 
-    <button onclick="baixarApk()" class="btn">
-        ⬇️ Baixar APK
-    </button>
+    <script>
+      let interval = null;
 
-    <button onclick="baixarConfig()" class="btn config">
-        ⬇️ Baixar .config
-    </button>
+      async function loadStatus() {
+        const res = await fetch("/status");
+        const data = await res.json();
 
-    
-</div>
+        document.getElementById("files").innerText = data.files;
+        document.getElementById("msg").innerText = data.mensagem;
 
-<script>
-let interval = null;
+        if (data.tempo_para_liberar) {
+          startTimer(data.tempo_para_liberar);
+        } else {
+          document.getElementById("timer").innerText = "--:--";
+        }
+      }
 
-async function loadStatus() {
-    const res = await fetch("/status");
-    const data = await res.json();
+      function startTimer(seconds) {
+        clearInterval(interval);
 
-    document.getElementById("files").innerText = data.files;
-    document.getElementById("msg").innerText = data.mensagem;
-
-    if (data.tempo_para_liberar) {
-        startTimer(data.tempo_para_liberar);
-    } else {
-        document.getElementById("timer").innerText = "--:--";
-    }
-}
-
-function startTimer(seconds) {
-    clearInterval(interval);
-
-    interval = setInterval(() => {
-        if (seconds <= 0) {
+        interval = setInterval(() => {
+          if (seconds <= 0) {
             clearInterval(interval);
             loadStatus();
             return;
-        }
+          }
 
-        const m = String(Math.floor(seconds / 60)).padStart(2, "0");
-        const s = String(seconds % 60).padStart(2, "0");
+          const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+          const s = String(seconds % 60).padStart(2, "0");
 
-        document.getElementById("timer").innerText = `${m}:${s}`;
-        seconds--;
-    }, 1000);
-}
+          document.getElementById("timer").innerText = `${m}:${s}`;
+          seconds--;
+        }, 1000);
+      }
 
-function download(url) {
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
+      function download(url) {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
 
-async function baixarApk() {
-     // Navega direto para a rota
-    // O Flask já força o download
-    window.location.href = "/update/apk";
-}
+      function baixarApkOld() {
+        window.location.href =
+            "https://github.com/tikolol96-glitch/LICENCAS-UNITV/releases/download/APK/UniTV_OLD.apk";
+      }
 
-async function baixarConfig() {
-     // Navega direto para a rota
-    // O Flask já força o download
-    window.location.href = "/update/config";
-}
+      function baixarApkNew() {
+        window.location.href = 
+            "https://github.com/tikolol96-glitch/LICENCAS-UNITV/releases/download/APK/UniTV_NEW.apk";
+      }
 
-// Inicialização
-loadStatus();
-setInterval(loadStatus, 10000);
-</script>
+      function baixarGerador() {
+        window.location.href =
+            "https://github.com/tikolol96-glitch/LICENCAS-UNITV/releases/download/APK/gerador.apk";
+      }
 
-</body>
+      // Inicialização
+      loadStatus();
+      setInterval(loadStatus, 10000);
+    </script>
+  </body>
 </html>
